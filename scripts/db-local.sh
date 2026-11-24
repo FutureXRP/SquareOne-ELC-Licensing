@@ -39,7 +39,7 @@ apply_all() {
   psql -q "$admin" -v ON_ERROR_STOP=1 -c "drop database if exists $db" -c "create database $db" 2>/dev/null
   psql -q "$url" -v ON_ERROR_STOP=1 -f "$ROOT/supabase/tests/000_local_stubs.sql"
   for f in "$ROOT"/supabase/migrations/*.sql; do
-    psql -q "$url" -v ON_ERROR_STOP=1 -f "$f"
+    psql -q "$url" -v ON_ERROR_STOP=1 -f "$f" >/dev/null
   done
   psql -q "$url" -v ON_ERROR_STOP=1 -f "$ROOT/supabase/seed.sql"
 }

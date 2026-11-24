@@ -1,15 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f7f8f7;
-  --foreground: #17211f;
+  /* Brand: admiral blue. */
+  --background: #f5f7fa;
+  --foreground: #141c2e;
   --card: #ffffff;
-  --muted: #eef1ef;
-  --muted-foreground: #586663;
-  --border: #dbe1de;
-  --primary: #0f5c55;
+  --muted: #e9edf4;
+  --muted-foreground: #56617a;
+  --border: #d5dbe6;
+  --primary: #2c3863;
   --primary-foreground: #ffffff;
-  --ring: #0f5c55;
+  --ring: #2c3863;
   /* Status tones. Green is reserved for verified + current (rule 4). */
   --status-green: #17663a;
   --status-green-bg: #e3f3e8;
@@ -17,8 +18,8 @@
   --status-amber-bg: #fdf0d5;
   --status-red: #a32020;
   --status-red-bg: #fbe4e2;
-  --status-neutral: #4a5553;
-  --status-neutral-bg: #e9ecea;
+  --status-neutral: #48526a;
+  --status-neutral-bg: #e6eaf1;
 }
 
 @theme inline {

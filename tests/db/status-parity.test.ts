@@ -194,6 +194,19 @@ describe.skipIf(!url)("v_requirement_status parity with lib/domain/status", () =
       });
     }
 
+    // The credential and calendar views use the same deadline formula.
+    const creds = await client.query(`select id, expiration_date::text as expiration_date, deadline_status, verified_at, is_verified_current from public.v_credentials`);
+    expect(creds.rows.length).toBeGreaterThan(0);
+    for (const c of creds.rows) {
+      expect({ id: c.id, deadline: deriveDeadlineStatus(c.expiration_date, today, thresholds) }).toEqual({ id: c.id, deadline: c.deadline_status });
+      // An expired credential is never verified/current, whatever its review says.
+      if (c.expiration_date !== null && c.expiration_date < today) expect(c.is_verified_current).toBe(false);
+    }
+    const dated = await client.query(`select kind, id, due_date::text as due_date, deadline_status from public.v_deadline_items`);
+    for (const d of dated.rows) {
+      expect({ id: d.id, deadline: deriveDeadlineStatus(d.due_date, today, thresholds) }).toEqual({ id: d.id, deadline: d.deadline_status });
+    }
+
     // Every deadline status and every evidence status is exercised.
     expect(new Set(view.rows.map((r) => r.deadline_status))).toEqual(
       new Set(["none", "overdue", "urgent", "due_soon", "current"]),

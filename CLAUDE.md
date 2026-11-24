@@ -14,6 +14,9 @@ pnpm db:test                       # SQL tests: constraints and RLS denied cases
 pnpm db:types                      # regenerate src/lib/database.types.ts after a migration
 pnpm test                          # unit tests + SQL/TypeScript status parity (needs DATABASE_URL)
 pnpm build
+scripts/supabase-local.sh start    # real Supabase services in Docker, writes .env.supabase-local
+pnpm test:e2e                      # acceptance tests with real logins (build first, with that env loaded)
+scripts/build-sql-bundle.sh        # refresh supabase/bundle after a new migration
 ```
 
 A phase is done only when all of the above pass plus that phase's acceptance tests.
@@ -49,9 +52,12 @@ A phase is done only when all of the above pass plus that phase's acceptance tes
 - Write complete files rather than partial patches.
 - One batch commit per session: `phase-N: summary`.
 - Every schema change is a new numbered migration in `supabase/migrations`. Never edit an applied one.
-- New tables need: `id`, `created_at`, `updated_at`, `archived_at`; RLS enabled; explicit `grant`s
-  (default privileges are revoked in 0009); `audit_row`, `no_hard_delete`, `no_truncate` and
-  `set_updated_at` triggers; and a denied-case test in `supabase/tests`.
+- New tables need: `id`, `created_at`, `updated_at`, `archived_at`; then `select public.setup_compliance_table('name')`
+  (RLS on, grants, audit, no hard delete, no truncate, updated_at); policies; and a denied-case
+  test in `supabase/tests`. New views need `security_invoker = true` and an explicit `grant select`.
+- Server actions go through `runAction()` in `src/lib/auth/action.ts`. Use the service-role client
+  only in cron routes and the user-admin actions.
+- Pages read the session first (`requirePermission` / `requireRole`); that makes them request-time.
 - Regenerate `src/lib/database.types.ts` after each migration (`pnpm db:types`). CI fails if it is stale.
 - Next.js 16: `src/proxy.ts` replaces `middleware.ts`. Cache Components is on, so anything that
   reads the session sits behind a `<Suspense>` boundary. Read `node_modules/next/dist/docs/` first.
@@ -74,8 +80,12 @@ A phase is done only when all of the above pass plus that phase's acceptance tes
 - **Tasks and reminders:** `tasks`, `reminder_events` (unique per item, milestone, recipient, due
   date), `settings` (`due_soon_days` 30, `urgent_days` 7, milestones, digest day).
 - **Audit:** `audit_events`, insert-only, written by triggers on every compliance table.
-- Phase 3: inspections, findings, corrective_actions, safety_checks, policies, children.
-  Phase 4: review_cycles, review_results, auditor_grants.
+- **Program:** `inspections`, `findings`, `corrective_actions`, `safety_checks`, `policies`,
+  `policy_versions`, `policy_acknowledgments`, `children` (code, first name, last initial only).
+- **Reviews and auditors:** `review_cycles`, `review_results` (insert-only snapshots), `auditor_grants`.
+- **Views:** `v_requirement_status`, `v_credentials`, `v_deadline_items`, `v_review_queue`.
+- **Functions:** `review_evidence_link` (the only way to decide a submission), `generate_instances`,
+  `classroom_file_indicators`, `profile_names`.
 
 ### Status derivation (`v_requirement_status` and `src/lib/domain/status.ts`, parity-tested)
 
@@ -99,7 +109,7 @@ stay in the denominator; zero applicable displays `N/A`; integer basis points; a
 | admin_support | Staff records, uploads, tasks. No activation, no approvals, no `child_health` unless granted, never `restricted` |
 | educator | Own staff row, credentials, training, tasks, uploads |
 | classroom_reviewer | Assigned classroom checklists as present / missing only, never the documents |
-| auditor | Read-only, only inside an unexpired `auditor_grants` scope (phase 4; nothing before then) |
+| auditor | Read-only, only inside an unexpired, unrevoked `auditor_grants` scope |
 
 - Policies use `auth_role()`, `auth_staff_id()`, `can_access_class()` (security definer).
   An inactive or archived profile has no role and is denied everywhere.

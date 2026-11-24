@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { Card } from "@/components/ui/card";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASS = {
@@ -9,27 +9,27 @@ const TONE_CLASS = {
   neutral: "text-foreground",
 } as const;
 
+/** A computed count. Every card links to the filtered list behind the number. */
 export function StatCard({
   label,
   value,
-  hint,
   icon: Icon,
   tone = "neutral",
+  href,
 }: {
   label: string;
   value: string;
-  hint?: string;
   icon: LucideIcon;
   tone?: keyof typeof TONE_CLASS;
+  href: string;
 }) {
   return (
-    <Card className="p-4">
+    <Link href={href} className="rounded-lg border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
       <div className="flex items-center justify-between gap-2">
         <p className="text-sm text-muted-foreground">{label}</p>
-        <Icon className="size-4 text-muted-foreground" aria-hidden />
+        <Icon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
       </div>
       <p className={cn("mt-2 text-3xl font-semibold tabular-nums", TONE_CLASS[tone])}>{value}</p>
-      {hint ? <p className="mt-1 text-xs text-muted-foreground">{hint}</p> : null}
-    </Card>
+    </Link>
   );
 }

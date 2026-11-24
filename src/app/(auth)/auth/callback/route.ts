@@ -12,7 +12,11 @@ const OTP_TYPES: readonly EmailOtpType[] = ["invite", "magiclink", "recovery", "
  * same-site paths.
  */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  // Redirect on the host the browser used, so the session cookie set here is sent back.
+  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? request.nextUrl.host;
+  const proto = request.headers.get("x-forwarded-proto") ?? request.nextUrl.protocol.replace(":", "");
+  const origin = `${proto}://${host}`;
   const next = safeNextPath(searchParams.get("next"));
   const failed = NextResponse.redirect(new URL("/login", origin));
   if (!isSupabaseConfigured()) return failed;

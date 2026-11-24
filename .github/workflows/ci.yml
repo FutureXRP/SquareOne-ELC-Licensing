@@ -44,3 +44,28 @@ jobs:
       - name: Unit and parity tests
         run: pnpm test
       - run: pnpm build
+
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Start local Supabase (Auth, PostgREST, Storage, Postgres)
+        run: scripts/supabase-local.sh start
+      - name: SQL tests against Supabase Postgres
+        run: |
+          set -a; . ./.env.supabase-local; set +a
+          DATABASE_URL="$SUPABASE_DB_URL" pnpm db:test
+      - name: Build
+        run: |
+          set -a; . ./.env.supabase-local; set +a
+          pnpm build
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Acceptance tests with real logins
+        run: pnpm test:e2e

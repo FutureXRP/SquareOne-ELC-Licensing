@@ -43,3 +43,8 @@ export function formatDateOnly(date: DateOnly): string {
     new Date(Date.UTC(y, m - 1, d)),
   );
 }
+
+/** True when an ISO timestamp is in the past. Kept here so pages stay free of clock reads. */
+export function isPast(iso: string): boolean {
+  return new Date(iso).getTime() <= Date.now();
+}

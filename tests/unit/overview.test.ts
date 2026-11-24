@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { summarizeOverview, type OverviewRow } from "@/lib/domain/overview";
+import { actionRank, summarizeOverview, type OverviewRow } from "@/lib/domain/overview";
 
 const row = (partial: Partial<OverviewRow>): OverviewRow => ({
   evidenceStatus: "missing",
@@ -46,10 +46,34 @@ describe("summarizeOverview", () => {
     expect(s.safetyCriticalExceptions).toBe(1);
   });
 
+  it("counts a staff member as verified only when every open item is green", () => {
+    const s = summarizeOverview([
+      row({ subjectType: "staff", subjectId: "a", evidenceStatus: "verified", deadlineStatus: "current" }),
+      row({ subjectType: "staff", subjectId: "a", evidenceStatus: "verified" }),
+      row({ subjectType: "staff", subjectId: "b", evidenceStatus: "verified" }),
+      row({ subjectType: "staff", subjectId: "b", evidenceStatus: "pending_review" }),
+      row({ subjectType: "staff", subjectId: "c", evidenceStatus: "verified", deadlineStatus: "due_soon" }),
+    ]);
+    expect(s.staffVerified).toBe(1);
+    expect(s.staffTotal).toBe(3);
+  });
+
+  it("puts safety-critical and overdue work first and leaves green items out", () => {
+    expect(actionRank({ evidenceStatus: "verified", deadlineStatus: "current", criticality: null })).toBeNull();
+    expect(actionRank({ evidenceStatus: "not_applicable", deadlineStatus: "overdue", criticality: null })).toBeNull();
+    const overdue = actionRank({ evidenceStatus: "verified", deadlineStatus: "overdue", criticality: null })!;
+    const missing = actionRank({ evidenceStatus: "missing", deadlineStatus: "none", criticality: null })!;
+    const criticalMissing = actionRank({ evidenceStatus: "missing", deadlineStatus: "none", criticality: "safety_critical" })!;
+    const unknown = actionRank({ evidenceStatus: "unknown", deadlineStatus: "none", criticality: null })!;
+    expect(overdue).toBeLessThan(missing);
+    expect(criticalMissing).toBeLessThan(missing);
+    expect(missing).toBeLessThan(unknown);
+  });
+
   it("reports N/A per authority with nothing applicable", () => {
     const s = summarizeOverview([row({ evidenceStatus: "verified" })]);
-    const apple = s.readinessByAuthority.find((a) => a.authorityCode === "APPLE");
+    const apple = s.readinessByArea.find((a) => a.area === "APPLE");
     expect(apple?.readiness.basisPoints).toBeNull();
-    expect(s.readinessByAuthority.map((a) => a.authorityCode)).toEqual(["DHS", "STARS", "APPLE", "CECPD", "INTERNAL"]);
+    expect(s.readinessByArea.map((a) => a.area)).toEqual(["DHS", "STARS", "APPLE", "Staff", "Child files", "Safety"]);
   });
 });

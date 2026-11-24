@@ -1,6 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { can, type AppRole, type Permission } from "@/lib/auth/permissions";
 import { isSupabaseConfigured } from "@/lib/env";
@@ -21,7 +22,9 @@ export type Session = {
  * Cached per request.
  */
 export const getSession = cache(async (): Promise<Session | null> => {
-  // Always a request-time read, so no signed-in page can ever be prerendered at build.
+  // Always a request-time read: signed-in content is never prerendered or prefetched from
+  // a cached shell, and clock reads after this point are allowed by Cache Components.
+  await connection();
   await cookies();
   if (!isSupabaseConfigured()) return null;
   const supabase = await createClient();

@@ -13,70 +13,91 @@ open decisions in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 
 | Phase | State |
 |---|---|
-| 0 Scaffold | Built and tested locally. Exit check (director signs in on a Vercel preview) needs a Supabase project and a Vercel deployment. |
-| 1 Foundation | Not started (the database half, RLS, audit triggers and the activation gate, is already in migrations 0001 to 0010 with tests) |
-| 2 MVP | Not started |
-| 3 Program compliance | Not started |
-| 4 Reporting | Not started |
-| 5 Optimization | Not started |
+| 0 Scaffold | Built |
+| 1 Foundation | Built: users, roles, invitations, settings, requirements library with the activation gate, audit, signed file links, RLS tests |
+| 2 MVP | Built: Overview, staff, credentials, training, evidence upload and review, renewal cycles, tasks, reminders (off by default), CSV import |
+| 3 Program compliance | Built: Licensing / STARS / APPLE views, staff and child file checklists, inspections, corrective actions, safety checks, policies, event workflows |
+| 4 Reporting | Built: reports with print and CSV, quarterly reviews with snapshots, auditor packets |
+| 5 Optimization | Not started (metrics page, reminder tuning, integrations) |
+
+Everything above passes locally against a real Supabase stack (Auth, PostgREST, Storage, Postgres)
+running in Docker. It has **not** been run against a hosted Supabase project or deployed to Vercel
+yet, and reminder emails have never been sent through Resend. See `docs/RUNBOOK.md` for the
+go-live gate.
 
 ## Stack
 
 Next.js 16 (App Router, TypeScript strict), Tailwind CSS 4, shadcn-style components, lucide-react,
-Supabase (Postgres, Auth, Storage, Row Level Security), Zod, date-fns-tz (`America/Chicago`),
-Vitest, pnpm. Resend, React Email, Vercel Cron and Playwright specs arrive with phase 2.
+Supabase (Postgres, Auth, Storage, Row Level Security), Resend, Zod, date-fns-tz
+(`America/Chicago`), Vitest, Playwright, pnpm, Vercel Cron.
 
-## Local checks (no Supabase account needed)
-
-Requires Node 22, pnpm 10 and a local PostgreSQL 15+ install (`initdb`, `pg_ctl`, `psql`).
+## Tests
 
 ```bash
 pnpm install
 ```
+
+Fast checks on plain PostgreSQL 15+ (no Docker):
 
 ```bash
 export DATABASE_URL=$(scripts/db-local.sh start)
 ```
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm db:test && pnpm test && pnpm build
+pnpm lint && pnpm typecheck && pnpm db:test && pnpm test
 ```
 
-`scripts/db-local.sh start` runs a throwaway Postgres on port 54329, applies small stand-ins for
-Supabase's `auth` and `storage` schemas (`supabase/tests/000_local_stubs.sql`), then every
-migration and `supabase/seed.sql`. `pnpm db:test` runs the SQL suite that proves the denied
-cases. `pnpm test` runs the unit tests and the parity test between the SQL status view and the
-TypeScript status functions. Stop the server with `scripts/db-local.sh stop`.
+Full end-to-end acceptance tests with real logins (needs Docker):
 
-## Connect a Supabase project (development)
+```bash
+scripts/supabase-local.sh start
+```
+
+```bash
+set -a; . ./.env.supabase-local; set +a; pnpm build && pnpm test:e2e
+```
+
+`scripts/supabase-local.sh` runs real Supabase Auth, PostgREST, Storage and Postgres from
+`supabase/local/docker-compose.yml`, applies every migration and the synthetic seed, and writes
+the local keys to `.env.supabase-local`. To use the app by hand against it, copy that file to
+`.env.local`, run `pnpm dev`, and create a login with `pnpm seed:director`.
+
+- `pnpm db:test`: 196 SQL assertions, one denied case per RLS policy plus the database rules.
+- `pnpm test`: unit tests for status, readiness, deadlines, reminders, training and CSV, and the
+  parity test between the SQL views and the TypeScript functions.
+- `pnpm test:e2e`: the BUILD.md acceptance tests in a browser, one login per role.
+
+## Connect a hosted Supabase project
 
 Use separate Supabase projects for development and production.
 
-1. Create a project. In Authentication settings turn **public sign-up off** and **email
-   confirmation on** (invite-only).
-2. Apply the migrations in order and the synthetic seed:
+1. Create a project. Under Authentication, turn **Allow new users to sign up** off and keep
+   email confirmation on.
+2. Create the schema. Either paste `supabase/bundle/1-schema.sql` into the SQL editor and run it
+   once (then `supabase/bundle/2-seed.sql` for synthetic data, development only), or use the CLI:
+   `supabase link --project-ref <ref>` then `supabase db push --include-seed`.
+   Rebuild the bundle after a new migration with `scripts/build-sql-bundle.sh`.
+   Never apply `supabase/tests/000_local_stubs.sql` to a Supabase project.
+3. Create the first director. In Authentication, Users, add a user with an email and password
+   (auto-confirm on), then run in the SQL editor:
 
-   ```bash
-   supabase link --project-ref <ref>
+   ```sql
+   update public.profiles
+      set role = 'director', is_active = true, display_name = 'Your Name'
+    where email = 'you@example.org';
    ```
 
-   ```bash
-   supabase db push --include-seed
-   ```
-
-   Do not apply `supabase/tests/000_local_stubs.sql` to a Supabase project. It is for plain
-   Postgres only.
-3. Copy `.env.example` to `.env.local` and fill in the URL, anon key and service-role key.
-4. Create a director login for the synthetic data (use a test mailbox):
-
-   ```bash
-   SEED_DIRECTOR_EMAIL=director@example.test SEED_DIRECTOR_PASSWORD='<12+ characters>' pnpm seed:director
-   ```
-
+   Every later account is created by that director in Settings, Users.
+4. Set the variables from `.env.example` (locally in `.env.local`, on Vercel per environment).
 5. `pnpm dev`, then sign in at `/login`.
 
-Once a project is linked, `supabase gen types typescript --linked > src/lib/database.types.ts`
-can replace `pnpm db:types`; both produce the same shape.
+**Invitations.** Settings, Users creates an account either with a temporary password or with a
+one-time link. The link is emailed through Resend when `RESEND_API_KEY` and `EMAIL_FROM` are set;
+otherwise the director is shown the link to pass on privately. Supabase's own invitation email is
+not used, so no email template needs editing.
+
+**Reminders.** `/api/cron/daily` and `/api/cron/weekly-digest` are scheduled in `vercel.json`.
+They require `CRON_SECRET` and do nothing unless `REMINDERS_ENABLED=true`.
 
 ## Deploy a preview (Vercel)
 
@@ -88,14 +109,16 @@ The phase 0 exit check is: the seeded director signs in on the preview and sees 
 
 ```text
 supabase/migrations   numbered SQL migrations (never edit an applied one)
+supabase/bundle       the same migrations as one paste-ready file
 supabase/seed.sql     synthetic data only
 supabase/tests        SQL tests: constraints and RLS denied cases
+supabase/local        Docker stack for local Supabase
+emails                email templates (title, due date, link only)
 src/proxy.ts          session refresh and route protection (Next.js 16 name for middleware)
-src/app               routes: (auth) login + callback, (app) the eight tabs
-src/lib/domain        pure functions: status, readiness, training, overview
+src/app               (auth) login and callback, (app) all screens, (auditor) packets, api routes
+src/actions           server actions by module
+src/lib/domain        pure functions: status, readiness, deadlines, reminders, training, overview
 src/lib/auth          session, role checks, permission table
-src/lib/supabase      server, browser, admin (service role) and proxy clients
-tests/unit            domain unit tests
-tests/db              SQL view vs TypeScript parity
-scripts               local database, type generation, director seed
+tests/unit, tests/db  unit tests and SQL/TypeScript parity
+tests/e2e             acceptance tests with real logins
 ```

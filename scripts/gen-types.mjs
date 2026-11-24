@@ -45,6 +45,8 @@ const columns = (
 function tsType(typ) {
   if (enumNames.has(typ)) return `Database["public"]["Enums"]["${typ}"]`;
   switch (typ) {
+    case "_uuid":
+      return "string[]";
     case "int2":
     case "int4":
     case "int8":
@@ -107,10 +109,24 @@ for (const [name, rel] of rels) {
 }
 out.push("    };");
 out.push("    Functions: {");
-out.push('      auth_role: { Args: Record<PropertyKey, never>; Returns: Database["public"]["Enums"]["app_role"] | null };');
-out.push("      auth_staff_id: { Args: Record<PropertyKey, never>; Returns: string | null };");
-out.push('      can_access_class: { Args: { cls: Database["public"]["Enums"]["access_class"] }; Returns: boolean };');
-out.push("      chicago_today: { Args: Record<PropertyKey, never>; Returns: string };");
+const fn = (name, args, returns) => out.push(`      ${name}: { Args: ${args}; Returns: ${returns} };`);
+const NONE = "Record<PropertyKey, never>";
+fn("auth_role", NONE, 'Database["public"]["Enums"]["app_role"] | null');
+fn("auth_staff_id", NONE, "string | null");
+fn("can_access_class", '{ cls: Database["public"]["Enums"]["access_class"] }', "boolean");
+fn("chicago_today", NONE, "string");
+fn("generate_instances", "{ p_version?: string | null }", "number");
+fn(
+  "review_evidence_link",
+  '{ p_link: string; p_decision: Database["public"]["Enums"]["link_status"]; p_note?: string | null; p_next_due?: string | null; p_set_due?: boolean }',
+  "string",
+);
+fn(
+  "classroom_file_indicators",
+  "{ p_classroom: string }",
+  '{ subject_type: Database["public"]["Enums"]["applicability_scope"]; subject_label: string; requirement_title: string; present: boolean }[]',
+);
+fn("profile_names", "{ ids: string[] }", "{ id: string; display_name: string }[]");
 out.push("    };");
 out.push("    Enums: {");
 for (const e of enums) out.push(`      ${e.name}: ${e.labels.map((l) => JSON.stringify(l)).join(" | ")};`);

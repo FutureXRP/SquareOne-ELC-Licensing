@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { isSupabaseConfigured } from "@/lib/env";
 import { createClient } from "@/lib/supabase/server";
+import { done, fail, type ActionState } from "@/lib/actions";
 import { signInSchema } from "@/lib/validation/auth";
 
 export type SignInState = { error: string | null; email: string };
@@ -36,4 +37,15 @@ export async function signOut(): Promise<void> {
     await supabase.auth.signOut();
   }
   redirect("/login");
+}
+
+/** Invited users arrive signed in through their email link and choose a password here. */
+export async function setPassword(_p: ActionState, formData: FormData): Promise<ActionState> {
+  const password = String(formData.get("password") ?? "");
+  if (password.length < 12) return fail("Use at least 12 characters.");
+  if (password !== String(formData.get("confirm") ?? "")) return fail("The two passwords do not match.");
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) return fail(error.status === 422 ? "Choose a different password." : "The password could not be saved. Open your invitation link again.");
+  return done("Password saved. You can use the menu above to get started.");
 }

@@ -1,0 +1,84 @@
+# Local Supabase stack for development, e2e tests and CI: real Postgres, Auth (GoTrue),
+# PostgREST, Storage and a mail catcher. Started by scripts/supabase-local.sh, which also
+# generates the keys and runs the small gateway on http://127.0.0.1:54321.
+# Local throwaway credentials only. Synthetic data only.
+name: squareone-local
+services:
+  db:
+    image: supabase/postgres:15.8.1.060
+    ports: ["54322:5432"]
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXP: 3600
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-h", "localhost"]
+      interval: 3s
+      timeout: 3s
+      retries: 40
+  auth:
+    image: supabase/gotrue:v2.170.0
+    ports: ["54324:9999"]
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://127.0.0.1:54321/auth/v1
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_auth_admin:${PG_PASSWORD}@db:5432/postgres
+      GOTRUE_SITE_URL: ${SITE_URL}
+      GOTRUE_URI_ALLOW_LIST: ${SITE_URL}/**
+      GOTRUE_DISABLE_SIGNUP: "true"
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_SECRET: ${JWT_SECRET}
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: "true"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_SMTP_HOST: mail
+      GOTRUE_SMTP_PORT: 1025
+      GOTRUE_SMTP_ADMIN_EMAIL: no-reply@example.test
+      GOTRUE_SMTP_SENDER_NAME: SquareOne local
+      GOTRUE_MAILER_URLPATHS_INVITE: /verify
+      GOTRUE_MAILER_URLPATHS_CONFIRMATION: /verify
+      GOTRUE_MAILER_URLPATHS_RECOVERY: /verify
+      GOTRUE_MAILER_URLPATHS_EMAIL_CHANGE: /verify
+      GOTRUE_RATE_LIMIT_EMAIL_SENT: 1000
+  rest:
+    image: postgrest/postgrest:v12.2.3
+    ports: ["54325:3000"]
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+    environment:
+      PGRST_DB_URI: postgres://authenticator:${PG_PASSWORD}@db:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+  storage:
+    image: supabase/storage-api:v1.19.3
+    ports: ["54326:5000"]
+    depends_on:
+      db: { condition: service_healthy }
+      rest: { condition: service_started }
+    restart: unless-stopped
+    environment:
+      ANON_KEY: ${ANON_KEY}
+      SERVICE_KEY: ${SERVICE_ROLE_KEY}
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      DATABASE_URL: postgres://supabase_storage_admin:${PG_PASSWORD}@db:5432/postgres
+      FILE_SIZE_LIMIT: 20971520
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: stub
+      REGION: stub
+      GLOBAL_S3_BUCKET: stub
+      ENABLE_IMAGE_TRANSFORMATION: "false"
+  mail:
+    image: axllent/mailpit:v1.21
+    ports: ["54327:8025"]
