@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f8f7;
+  --foreground: #17211f;
+  --card: #ffffff;
+  --muted: #eef1ef;
+  --muted-foreground: #586663;
+  --border: #dbe1de;
+  --primary: #0f5c55;
+  --primary-foreground: #ffffff;
+  --ring: #0f5c55;
+  /* Status tones. Green is reserved for verified + current (rule 4). */
+  --status-green: #17663a;
+  --status-green-bg: #e3f3e8;
+  --status-amber: #8a5300;
+  --status-amber-bg: #fdf0d5;
+  --status-red: #a32020;
+  --status-red-bg: #fbe4e2;
+  --status-neutral: #4a5553;
+  --status-neutral-bg: #e9ecea;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-status-green: var(--status-green);
+  --color-status-green-bg: var(--status-green-bg);
+  --color-status-amber: var(--status-amber);
+  --color-status-amber-bg: var(--status-amber-bg);
+  --color-status-red: var(--status-red);
+  --color-status-red-bg: var(--status-red-bg);
+  --color-status-neutral: var(--status-neutral);
+  --color-status-neutral-bg: var(--status-neutral-bg);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff;
+  }
+}
