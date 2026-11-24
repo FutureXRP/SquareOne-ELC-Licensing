@@ -106,7 +106,7 @@ stay in the denominator; zero applicable displays `N/A`; integer basis points; a
 | Role | Access |
 |---|---|
 | director | Everything: settings, library activation, approvals, N/A approvals, users |
-| admin_support | Staff records, uploads, tasks. No activation, no approvals, no `child_health` unless granted, never `restricted` |
+| admin_support | Staff records, uploads, tasks. Library DRAFTS only when granted `can_draft_library`. No activation, no approvals, no `child_health` unless granted, never `restricted` |
 | educator | Own staff row, credentials, training, tasks, uploads |
 | classroom_reviewer | Assigned classroom checklists as present / missing only, never the documents |
 | auditor | Read-only, only inside an unexpired, unrevoked `auditor_grants` scope |
@@ -116,7 +116,8 @@ stay in the denominator; zero applicable displays `N/A`; integer basis points; a
 - `personnel` and `child_health` are separate grants. Neither implies the other.
 - Storage: private bucket `evidence`, path
   `{access_class}/{subject_type}/{subject_id}/{evidence_id}/{filename}`, no public URLs, 60-second
-  signed URLs through `/api/evidence/signed-url` after a permission re-check.
+  signed URLs through `/api/evidence/signed-url` after a permission re-check. Every view is written to
+  `evidence_access_log` (insert-only, director-readable).
 - Separation deactivates the profile, cancels open tasks and queued reminders, keeps the records.
 - `src/lib/auth/permissions.ts` drives navigation only. RLS is the access control.
 - Every RLS policy has a denied-case test in `supabase/tests`.

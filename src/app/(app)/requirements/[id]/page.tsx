@@ -29,7 +29,9 @@ export default async function RequirementPage({ params }: PageProps<"/requiremen
     fetchAll((a, b) => db.from("requirement_versions").select("*").eq("requirement_id", id).order("created_at", { ascending: false }).range(a, b)),
     fetchAll((a, b) => db.from("v_requirement_status").select("*").eq("requirement_id", id).is("closed_at", null).order("subject_label").range(a, b)),
   ]);
+  const { data: me } = await db.from("profiles").select("can_draft_library").eq("id", session.userId).maybeSingle();
   const director = can(session.role, "library.edit");
+  const drafter = director || (session.role === "admin_support" && me?.can_draft_library === true);
   const office = can(session.role, "staff.edit");
   const draft = versions.find((v) => v.status === "draft");
   const active = versions.find((v) => v.status === "active");
@@ -57,7 +59,7 @@ export default async function RequirementPage({ params }: PageProps<"/requiremen
             ))}
           </tbody>
         </Table>
-        {director && !draft ? (
+        {drafter && !draft ? (
           <div className="mt-3">
             <ActionForm action={startNewVersion} submitLabel="The rule changed: start a new version" variant="outline">
               <input type="hidden" name="requirement_id" value={id} />
@@ -66,7 +68,7 @@ export default async function RequirementPage({ params }: PageProps<"/requiremen
         ) : null}
       </Section>
 
-      {director && draft ? (
+      {drafter && draft ? (
         <Section title={`Draft ${draft.version_label}`} description="Fill this in from the official source. Activation needs the citation, the source link, the date you reviewed the source, a frequency and a criticality. When a new version activates, items under the old version close and fresh items open.">
           <ActionForm action={saveDraftVersion} submitLabel="Save draft" variant="outline">
             <input type="hidden" name="version_id" value={draft.id} />
@@ -101,6 +103,7 @@ export default async function RequirementPage({ params }: PageProps<"/requiremen
               </FormGrid>
             </fieldset>
           </ActionForm>
+          {director ? (
           <div className="mt-4 border-t border-border pt-4">
             <p className="mb-2 text-sm text-muted-foreground">Save the draft first, then activate. Activation re-sends the saved values below.</p>
             <ActionForm action={activateVersion} submitLabel="Activate this version" confirm="Activate this version? I confirm I reviewed the official source.">
@@ -118,6 +121,7 @@ export default async function RequirementPage({ params }: PageProps<"/requiremen
               <input type="hidden" name="rule_trigger" value={String(rule?.trigger ?? "")} />
             </ActionForm>
           </div>
+          ) : <p className="mt-4 border-t border-border pt-4 text-sm text-muted-foreground">Only the director can activate this version.</p>}
         </Section>
       ) : null}
 

@@ -71,7 +71,7 @@ export async function inviteUser(_p: ActionState, fd: FormData): Promise<ActionS
 }
 
 export async function updateUser(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const schema = z.object({ id: uuid, role, is_active: checkbox, child_health_access: checkbox, staff_id: optionalUuid, display_name: optionalText(120) });
+  const schema = z.object({ id: uuid, role, is_active: checkbox, child_health_access: checkbox, can_draft_library: checkbox, staff_id: optionalUuid, display_name: optionalText(120) });
   const { data, error } = parseForm(schema, fd);
   if (error) return error;
   return runAction(DIRECTOR, async ({ db, session }) => {

@@ -251,6 +251,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           archived_at: string | null;
+          is_critical: boolean;
         };
         Insert: {
           id?: string;
@@ -260,6 +261,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          is_critical?: boolean;
         };
         Update: {
           id?: string;
@@ -269,6 +271,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          is_critical?: boolean;
         };
         Relationships: [];
       };
@@ -380,6 +383,27 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+        };
+        Relationships: [];
+      };
+      evidence_access_log: {
+        Row: {
+          id: string;
+          evidence_id: string;
+          profile_id: string;
+          at: string;
+        };
+        Insert: {
+          id?: string;
+          evidence_id: string;
+          profile_id: string;
+          at?: string;
+        };
+        Update: {
+          id?: string;
+          evidence_id?: string;
+          profile_id?: string;
+          at?: string;
         };
         Relationships: [];
       };
@@ -497,6 +521,45 @@ export type Database = {
         };
         Relationships: [];
       };
+      pdl_hour_targets: {
+        Row: {
+          id: string;
+          level_min: number;
+          level_max: number;
+          target_minutes: number;
+          source_url: string | null;
+          last_source_review: string | null;
+          confirmed: boolean;
+          created_at: string;
+          updated_at: string;
+          archived_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          level_min: number;
+          level_max: number;
+          target_minutes: number;
+          source_url?: string | null;
+          last_source_review?: string | null;
+          confirmed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          archived_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          level_min?: number;
+          level_max?: number;
+          target_minutes?: number;
+          source_url?: string | null;
+          last_source_review?: string | null;
+          confirmed?: boolean;
+          created_at?: string;
+          updated_at?: string;
+          archived_at?: string | null;
+        };
+        Relationships: [];
+      };
       policies: {
         Row: {
           id: string;
@@ -605,6 +668,7 @@ export type Database = {
           created_at: string;
           updated_at: string;
           archived_at: string | null;
+          can_draft_library: boolean;
         };
         Insert: {
           id: string;
@@ -617,6 +681,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          can_draft_library?: boolean;
         };
         Update: {
           id?: string;
@@ -629,6 +694,7 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          can_draft_library?: boolean;
         };
         Relationships: [];
       };
@@ -695,6 +761,7 @@ export type Database = {
           updated_at: string;
           archived_at: string | null;
           credential_id: string | null;
+          notice_date: string | null;
         };
         Insert: {
           id?: string;
@@ -713,6 +780,7 @@ export type Database = {
           updated_at?: string;
           archived_at?: string | null;
           credential_id?: string | null;
+          notice_date?: string | null;
         };
         Update: {
           id?: string;
@@ -731,6 +799,7 @@ export type Database = {
           updated_at?: string;
           archived_at?: string | null;
           credential_id?: string | null;
+          notice_date?: string | null;
         };
         Relationships: [];
       };
@@ -1089,6 +1158,8 @@ export type Database = {
           created_at: string;
           updated_at: string;
           archived_at: string | null;
+          pdl_level: number | null;
+          pdl_renewal_date: string | null;
         };
         Insert: {
           id?: string;
@@ -1105,6 +1176,8 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          pdl_level?: number | null;
+          pdl_renewal_date?: string | null;
         };
         Update: {
           id?: string;
@@ -1121,6 +1194,8 @@ export type Database = {
           created_at?: string;
           updated_at?: string;
           archived_at?: string | null;
+          pdl_level?: number | null;
+          pdl_renewal_date?: string | null;
         };
         Relationships: [];
       };
@@ -1280,6 +1355,7 @@ export type Database = {
           deadline_status: Database["public"]["Enums"]["deadline_status"] | null;
           is_verified_current: boolean | null;
           is_latest: boolean | null;
+          is_critical: boolean | null;
         };
         Relationships: [];
       };
@@ -1299,6 +1375,7 @@ export type Database = {
           verified: boolean | null;
           criticality: Database["public"]["Enums"]["criticality"] | null;
           authority_code: Database["public"]["Enums"]["authority_code"] | null;
+          critical: boolean | null;
         };
         Relationships: [];
       };
@@ -1387,7 +1464,7 @@ export type Database = {
       frequency_type: "one_time" | "recurring" | "expiration_based" | "event_triggered";
       lifecycle_status: "draft" | "active" | "superseded" | "archived";
       link_status: "pending" | "approved" | "rejected";
-      reminder_milestone: "d90" | "d60" | "d30" | "d14" | "d7" | "due" | "overdue" | "rejected" | "critical";
+      reminder_milestone: "d120" | "d90" | "d60" | "d30" | "d14" | "d7" | "d1" | "due" | "overdue" | "rejected" | "critical";
       task_status: "open" | "in_progress" | "done" | "cancelled";
       training_state: "pending" | "verified" | "ineligible";
     };
@@ -1414,7 +1491,7 @@ export const Constants = {
       frequency_type: ["one_time", "recurring", "expiration_based", "event_triggered"],
       lifecycle_status: ["draft", "active", "superseded", "archived"],
       link_status: ["pending", "approved", "rejected"],
-      reminder_milestone: ["d90", "d60", "d30", "d14", "d7", "due", "overdue", "rejected", "critical"],
+      reminder_milestone: ["d120", "d90", "d60", "d30", "d14", "d7", "d1", "due", "overdue", "rejected", "critical"],
       task_status: ["open", "in_progress", "done", "cancelled"],
       training_state: ["pending", "verified", "ineligible"],
     },

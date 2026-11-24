@@ -19,6 +19,9 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await db.storage.from("evidence").createSignedUrl(evidence.storage_path, 60);
   if (error || !data) return NextResponse.json({ error: "The file is not available." }, { status: 404 });
+  // Every view is logged (who, which document, when). If it cannot be logged, it is not served.
+  const { error: logError } = await db.from("evidence_access_log").insert({ evidence_id: id, profile_id: session.userId });
+  if (logError) return NextResponse.json({ error: "The file is not available." }, { status: 404 });
   const response = NextResponse.redirect(data.signedUrl);
   response.headers.set("Cache-Control", "no-store");
   return response;

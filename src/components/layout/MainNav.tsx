@@ -44,7 +44,7 @@ export function MainNav() {
               aria-current={active ? "page" : undefined}
               className={cn(
                 "whitespace-nowrap border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
-                active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                active ? "border-accent text-primary" : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
               )}
             >
               {item.label}

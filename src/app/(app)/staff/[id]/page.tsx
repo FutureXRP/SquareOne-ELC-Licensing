@@ -168,6 +168,8 @@ export default async function StaffProfilePage({ params }: PageProps<"/staff/[id
               <TextField label="Hire date" name="hire_date" type="date" defaultValue={person.hire_date ?? ""} />
               <SelectField label="Employment status" name="employment_status" defaultValue={person.employment_status} options={[{ value: "active", label: "Active" }, { value: "on_leave", label: "On leave" }, { value: "separated", label: "Separated" }]} />
               <TextField label="Separation date" name="separation_date" type="date" defaultValue={person.separation_date ?? ""} />
+              <TextField label="PDL level (1-11)" name="pdl_level" type="number" min={1} max={11} defaultValue={person.pdl_level ?? ""} hint="From the person's CECPD record." />
+              <TextField label="PDL renewal date" name="pdl_renewal_date" type="date" defaultValue={person.pdl_renewal_date ?? ""} hint="Renewal hours are counted over the 12 months ending on this date." />
             </FormGrid>
           </ActionForm>
         </Section>

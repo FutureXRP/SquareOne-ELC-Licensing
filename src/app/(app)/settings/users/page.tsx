@@ -56,6 +56,7 @@ export default async function UsersPage() {
                 <div className="flex flex-wrap gap-4 text-sm">
                   <label className="flex items-center gap-2"><input type="checkbox" name="is_active" defaultChecked={p.is_active} /> Active (can sign in and see data)</label>
                   <label className="flex items-center gap-2"><input type="checkbox" name="child_health_access" defaultChecked={p.child_health_access} /> May see child health files (admin support only)</label>
+                  <label className="flex items-center gap-2"><input type="checkbox" name="can_draft_library" defaultChecked={p.can_draft_library} /> May draft library entries (admin support only; never activate)</label>
                 </div>
               </ActionForm>
               {p.role === "classroom_reviewer" ? (

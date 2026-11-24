@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
     if (mine.length === 0) continue;
     const { data: logged } = await db
       .from("reminder_events")
-      .upsert({ milestone: "d30", recipient_id: person.id, due_date: today, channel: "digest" }, { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date", ignoreDuplicates: true })
+      .upsert({ milestone: "d30", recipient_id: person.id, due_date: today, channel: "digest" }, { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date,notice_date", ignoreDuplicates: true })
       .select("id");
     if (!logged || logged.length === 0) continue; // already sent today
     const result = await sendEmail(

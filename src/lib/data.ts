@@ -49,7 +49,7 @@ export async function listClassrooms(db: Db) {
 export async function listStaff(db: Db) {
   const { data } = await db
     .from("staff")
-    .select("id, employee_code, first_name, last_name, role_title, classroom_id, employment_status, hire_date")
+    .select("id, employee_code, first_name, last_name, role_title, classroom_id, employment_status, hire_date, pdl_level, pdl_renewal_date")
     .is("archived_at", null)
     .order("last_name");
   return data ?? [];
@@ -58,7 +58,7 @@ export async function listStaff(db: Db) {
 export async function listProfiles(db: Db) {
   const { data } = await db
     .from("profiles")
-    .select("id, email, display_name, role, is_active, staff_id, child_health_access")
+    .select("id, email, display_name, role, is_active, staff_id, child_health_access, can_draft_library")
     .is("archived_at", null)
     .order("email");
   return data ?? [];

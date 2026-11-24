@@ -21,7 +21,7 @@ export default async function SettingsPage() {
     db.from("programs").select("*").is("archived_at", null).limit(1).maybeSingle(),
   ]);
   const links = [
-    ...(director ? [{ href: "/settings/users", label: "Users, roles and invitations" }, { href: "/settings/setup", label: "Classrooms, credential types, reporting periods and training targets" }, { href: "/settings/auditors", label: "Auditor packets" }] : []),
+    ...(director ? [{ href: "/settings/users", label: "Users, roles and invitations" }, { href: "/settings/setup", label: "Authorities, classrooms, credential types, reporting periods, training and PDL targets" }, { href: "/settings/auditors", label: "Auditor packets" }, { href: "/settings/access-log", label: "Document view log" }] : []),
     { href: "/settings/import", label: "Import staff, credentials or training from CSV" },
     { href: "/settings/notifications", label: "Notifications and delivery log" },
     { href: "/settings/reviews", label: "Quarterly reviews" },

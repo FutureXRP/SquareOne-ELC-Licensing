@@ -9,13 +9,13 @@ export type Email = { subject: string; html: string; text: string };
 const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
 
 function layout(heading: string, lines: string[], link: { href: string; label: string }): Email["html"] {
-  return `<!doctype html><html><body style="margin:0;background:#f5f7fa;font-family:Arial,Helvetica,sans-serif;color:#141c2e">
+  return `<!doctype html><html><body style="margin:0;background:#f7f3ea;font-family:Arial,Helvetica,sans-serif;color:#1c2733">
 <div style="max-width:520px;margin:0 auto;padding:24px">
-<p style="font-size:13px;color:#56617a;margin:0 0 8px">SquareOne ELC Compliance Center</p>
-<h1 style="font-size:18px;margin:0 0 12px;color:#2c3863">${esc(heading)}</h1>
+<p style="font-size:13px;color:#5b6670;margin:0 0 8px">SquareOne ELC Compliance Center</p>
+<h1 style="font-size:18px;margin:0 0 12px;color:#26384a">${esc(heading)}</h1>
 ${lines.map((l) => `<p style="font-size:15px;line-height:22px;margin:0 0 8px">${l}</p>`).join("\n")}
-<p style="margin:16px 0"><a href="${esc(link.href)}" style="background:#2c3863;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none;font-size:15px">${esc(link.label)}</a></p>
-<p style="font-size:12px;color:#56617a;margin:16px 0 0">Internal readiness indicator. Not an official compliance determination.</p>
+<p style="margin:16px 0"><a href="${esc(link.href)}" style="background:#26384a;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none;font-size:15px">${esc(link.label)}</a></p>
+<p style="font-size:12px;color:#5b6670;margin:16px 0 0">Internal readiness indicator. Not an official compliance determination.</p>
 </div></body></html>`;
 }
 

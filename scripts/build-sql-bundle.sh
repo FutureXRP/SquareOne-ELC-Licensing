@@ -9,7 +9,7 @@ OUT="$ROOT/supabase/bundle"
 mkdir -p "$OUT"
 strip() { grep -v -E '^\s*--' "$@" | grep -v -E '^\s*$' || true; }
 {
-  echo "-- SquareOne ELC Compliance Center: full schema (migrations 0001 to 0015)."
+  echo "-- SquareOne ELC Compliance Center: full schema (migrations 0001 to 0016)."
   echo "-- Paste into the Supabase SQL editor of a NEW project and run once."
   for f in "$ROOT"/supabase/migrations/*.sql; do
     echo "-- ===== $(basename "$f") ====="

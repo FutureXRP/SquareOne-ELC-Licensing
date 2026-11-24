@@ -77,7 +77,7 @@ export async function saveProgram(_p: ActionState, fd: FormData): Promise<Action
 }
 
 export async function addCredentialType(_p: ActionState, fd: FormData): Promise<ActionState> {
-  const { data, error } = parseForm(z.object({ name: text(120), category: optionalText(80), requires_expiration: checkbox }), fd);
+  const { data, error } = parseForm(z.object({ name: text(120), category: optionalText(80), requires_expiration: checkbox, is_critical: checkbox }), fd);
   if (error) return error;
   return runAction(DIRECTOR, async ({ db }) => {
     const { error: e } = await db.from("credential_types").insert({ ...data, category: data.category ?? null });
@@ -115,5 +115,55 @@ export async function saveTrainingTarget(_p: ActionState, fd: FormData): Promise
       { onConflict: "role_title,reporting_period_id" },
     );
     return e ? dbFail(e) : done("Target saved.");
+  });
+}
+
+export async function setCredentialTypeCritical(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const { data, error } = parseForm(z.object({ id: uuid, is_critical: checkbox }), fd);
+  if (error) return error;
+  return runAction(DIRECTOR, async ({ db }) => {
+    const { error: e } = await db.from("credential_types").update({ is_critical: data.is_critical }).eq("id", data.id);
+    return e ? dbFail(e) : done("Saved.");
+  });
+}
+
+/** Official authority names and links, entered by the director from the authority's own site. */
+export async function saveAuthority(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const { data, error } = parseForm(z.object({ id: uuid, name: text(160), website: z.url("Enter the full web address.").optional() }), fd);
+  if (error) return error;
+  return runAction(DIRECTOR, async ({ db }) => {
+    const { error: e } = await db.from("authorities").update({ name: data.name, website: data.website ?? null }).eq("id", data.id);
+    return e ? dbFail(e) : done("Saved.");
+  });
+}
+
+/** PDL renewal hours by level. A row only counts once it is confirmed with its source and review date. */
+export async function savePdlTarget(_p: ActionState, fd: FormData): Promise<ActionState> {
+  const schema = z
+    .object({
+      level_min: z.coerce.number().int().min(1).max(11),
+      level_max: z.coerce.number().int().min(1).max(11),
+      hours: z.coerce.number().min(0).max(500).refine((h) => Number.isInteger(h * 60), "Use whole minutes."),
+      source_url: z.url("Enter the full web address of the official source.").optional(),
+      last_source_review: dateOnly.optional(),
+      confirmed: checkbox,
+    })
+    .refine((v) => v.level_max >= v.level_min, "The level range is backwards.")
+    .refine((v) => !v.confirmed || (v.source_url && v.last_source_review), "To confirm, enter the official source link and the date you reviewed it.");
+  const { data, error } = parseForm(schema, fd);
+  if (error) return error;
+  return runAction(DIRECTOR, async ({ db }) => {
+    const { error: e } = await db.from("pdl_hour_targets").upsert(
+      {
+        level_min: data.level_min,
+        level_max: data.level_max,
+        target_minutes: Math.round(data.hours * 60),
+        source_url: data.source_url ?? null,
+        last_source_review: data.last_source_review ?? null,
+        confirmed: data.confirmed,
+      },
+      { onConflict: "level_min,level_max" },
+    );
+    return e ? dbFail(e) : done("PDL target saved.");
   });
 }

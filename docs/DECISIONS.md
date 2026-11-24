@@ -1,35 +1,82 @@
 # Decisions
 
-## Open decisions (BUILD.md section 10)
+## Director's answers (2026-11-24)
 
-Built with the default shown. **Do not go live with real data until these are answered.**
+Source: "SquareOne ELC Compliance Center Decision Answers", prepared for the director, dated
+November 24, 2026. Go-live position: **approved with conditions**. The copy received had the
+signature line blank; these are recorded as the working rules for continued development.
+Real SquareOne data may not be entered until the five information-needed items below are done,
+hosted security and role tests pass, and the director signs the production go-live record.
 
-| # | Decision | Default in the build | Answer | Answered by / date |
+### Open decisions 1 to 10
+
+| # | Decision | Director's answer | Status | In the build |
 |---|---|---|---|---|
-| 1 | Current license and approved capacity | `licensed_capacity` null, shown as "Not confirmed" | | |
-| 2 | Licensing and STARS rule versions | All requirements stay `draft` / `unknown` | | |
-| 3 | APPLE renewal and reporting dates | No deadlines generated | | |
-| 4 | Role-specific training targets and reporting period | 1800 minutes, `confirmed = false`, labeled "Internal target, unconfirmed" | | |
-| 5 | Reminder thresholds and escalation recipients | Blueprint defaults, `REMINDERS_ENABLED=false` | | |
-| 6 | Authorized reviewers and backups | Director only | | |
-| 7 | Retention schedule and disposal | Soft archive only, nothing purged | | |
-| 8 | Where documents live | Supabase private bucket `evidence` | | |
-| 9 | Whether child records go in this system at all | Checklist indicators only until approved | | |
-| 10 | Sender domain for Resend | Not configured | | |
+| 1 | Current license and approved capacity | Working capacity is 95. Do not mark it confirmed until the currently issued Oklahoma Human Services license is uploaded and shows 95. The prior 140 capacity is not current. | Verify (go-live blocker) | A license copy was supplied showing Total Capacity 95 (issued 03/03/2021, Five Stars effective 1/1/2023). The seed stays synthetic. On the production project the director enters 95 in Settings, Program and uploads the license as evidence. Whether that copy is the currently issued license is for the director to confirm. |
+| 2 | Licensing and STARS rule versions | Activate Licensing Requirements for Child Care Programs, Pub. 14-05, effective 11-1-2025. Track the QRIS child care center criteria effective 6-1-2022 together with the later 5-Star accreditation requirement. Record source URL, effective date, review date and director approval for every active version. | Approve | Nothing is activated by code. The director activates each library entry with its citation, link and review date. Links are listed below. |
+| 3 | APPLE renewal and reporting dates | Accreditation awarded August 6, 2025. Use August 6, 2028 as the planning expiration and verify the exact date on the certificate. Annual August report task; confirm the invoice due date in the APPLE member hub. Begin reaccreditation work by August 6, 2027. | Approve | Entered by the director as due dates on the APPLE items once they are active. No date is seeded. The APPLE certificate has not been supplied yet: the document received is the March 2025 offer of candidacy (candidacy through 10/1/2025), which does not show the award or expiration date. |
+| 4 | Training targets and reporting period | Internal target of 30 professional-development hours per educator per year. Also track each person's CECPD/PDL expiration and renewal hours separately (current CECPD guidance: 12 hours for PDL Level 1, 20 for Levels 2 to 11), by each employee's renewal year. | Approve | The 30-hour internal target is already 1800 minutes; the director ticks it confirmed in Settings, Setup. New: PDL level and renewal date on each staff record, PDL renewal hours by level entered by the director with source link and review date, and a Training section that counts verified hours over each person's own renewal year. The 12 and 20 hour figures are not seeded. |
+| 5 | Reminder thresholds and recipients | Standard: 90, 60, 30, 14 and 7 days, due date, then weekly overdue. Critical credentials, licenses and accreditation: add 120 days and 1 day, then daily overdue until resolved. Assigned employee first; the director at 30 days; the authorized backup at 14 days. No confidential details in email. | Approve | Implemented. Critical means regulatory, accreditation and safety-critical requirements, plus credential types the director marks critical in Settings, Setup. `REMINDERS_ENABLED` stays false. |
+| 6 | Authorized reviewers and backups | Primary approver is the director. Admin support may prepare drafts but cannot activate rules or approve evidence. Director-only approval at launch. Before any director absence, name one backup in writing with start and end dates. | Conditional | Director-only approval is unchanged. Drafting by designated admin support is implemented (question C). A dated backup-reviewer delegation is **not built**: it waits for information-needed item 3, which defines the limits of that authority. |
+| 7 | Retention and disposal | Soft archive only, no automatic purge. No permanent deletion until a written retention schedule is adopted. Legal holds always stop disposal. | Safe launch | As built: nothing can be deleted. |
+| 8 | Where documents live | Supabase private evidence bucket as system of record. Deny public access, signed short-lived links, log views and downloads, encrypt in transit and at rest, tested backups. | Approve | Private bucket and 60-second signed links were already in place. New: every document view is logged (who, which document, when) in an insert-only log the director can read in Settings. Encryption is the hosting platform's; backups are on the go-live gate. |
+| 9 | Child records | Do not upload full child records at initial launch. Checklist indicators only. Keep the feature off until a separate privacy review, field list, role matrix, parent notice and retention rule are approved. | Approve | As built: off by default and enforced by the database. |
+| 10 | Sender domain | A verified SquareOne-owned domain, display name "SquareOne ELC Compliance", monitored SquareOne reply-to. Keep reminders off until SPF, DKIM and DMARC pass. Never a personal account. | Action | Display name and `EMAIL_REPLY_TO` are implemented. The domain itself is information-needed item 4. |
 
-Official starting points to verify (not checked): Oklahoma Human Services
-https://oklahoma.gov/okdhs.html, CECPD https://www.cecpd.org/, APPLE https://www.faccm.org/.
+### Questions A to F
 
-## Needs an answer from the director or product owner
+| # | Question | Director's answer | Status | In the build |
+|---|---|---|---|---|
+| A | Missing blueprint | Must be committed as `docs/BLUEPRINT.md`. BUILD.md may guide development temporarily but is not a substitute. Production go-live stays blocked until it is present and reviewed. | Required | **Still missing.** Not supplied yet. |
+| B | Status after rejection and corrected re-upload | The newer upload reads `pending_review`; the rejection stays in the history. | Approve | As built. |
+| C | Who may draft library entries | The director and designated admin support may create and edit drafts. Only the director may publish, activate, retire or change an official version. | Approve | Implemented: a "May draft library entries" grant on admin support accounts, enforced by RLS. |
+| D | Classroom reviewer access to names | Yes: names assigned to that classroom and a present/missing indicator only. No documents, dates, reasons, medical details or other classrooms. | Approve | As built. |
+| E | Phase 5 and integrations | Only after hosted Phase 0 checks pass, decisions 1 to 10 are implemented, role tests pass with real test accounts, backup and restore is tested and the director signs off. | Defer | Not built. |
+| F | Educator-entered checks and training | Yes, for their assigned classroom and their own training, pending until reviewed. | Approve | As built. |
 
-| # | Question | What the build does meanwhile |
+### Implementation decisions review
+
+Accepted as built: security and access, evidence and deadlines, authentication and invitations,
+email privacy. Three carried conditions or changes:
+
+- **Brand colors (change):** the approved palette is navy `#26384A`, sage `#879B82`, warm beige
+  `#E9DDC8`, slate `#66717A` and cream `#F7F3EA`. Implemented in `src/app/globals.css`. Body text
+  uses slightly darker shades of the navy and slate so small type keeps its contrast.
+- **Authority labels (conditional):** the neutral seed labels are for development only. Settings,
+  Setup now lets the director replace them with verified official names and links.
+- **Overview and testing, phase order (conditional / gate):** the same test suite must run against
+  hosted Supabase, and the hosted Phase 0 exit checks must pass, before production approval.
+
+### Information needed before real-data go-live
+
+| # | Item | State |
 |---|---|---|
-| A | **The blueprint is not in the repository.** BUILD.md says to commit "SquareOne ELC \| Certification, Credentialing & Licensing Dashboard" v1.0 as `docs/BLUEPRINT.md` and to stop where the two disagree. Only BUILD.md was available. | Built from BUILD.md alone. `docs/BLUEPRINT.md` is not created; nothing was written in its place. Add the file and re-check phases against it. |
-| B | Evidence status when a rejection is followed by a new upload. BUILD.md lists `needs_correction` (most recent decision is rejected) before `pending_review`. Read literally, a corrected re-upload would keep showing "needs correction" until approved. | A rejection stands until a newer submission is waiting; then the item reads `pending_review`. Same rule in the SQL view and in TypeScript, covered by tests. Easy to switch to the literal reading. |
-| C | Who may draft library entries. Section 6 gives the director activation; it does not say whether admin support may write drafts. | Director only for all library writes. |
-| D | Whether a classroom reviewer may see staff and child names for their classroom. | Yes, as a name with present / missing per file item (`/files/classroom`). Never a document, date or reason. |
-| E | Phase 5 (metrics page, reminder tuning, workload view) and all integrations. | Not built. |
-| F | Whether educators may record their own safety checks and training. | Yes: checks for their own classroom, and their own training as pending. |
+| 1 | Upload and verify the current DHS license showing the approved capacity | A license copy showing capacity 95 was supplied. To do on production: enter 95, upload it as evidence, director confirms it is the current license. |
+| 2 | Upload the APPLE certificate; confirm the exact expiration and annual-report invoice date | Open. The document supplied is the offer of candidacy, not the certificate. |
+| 3 | Name the temporary backup reviewer and document the limits of that authority | Open. |
+| 4 | Confirm the official SquareOne sender domain and monitored reply-to address | Open. |
+| 5 | Adopt a written retention and disposal schedule before permanent deletion is enabled | Open. Deletion stays disabled. |
+
+### Official sources named in the answers (checked by the director's office on 2026-11-24)
+
+Enter these in the library when activating; the build does not seed them.
+
+- Licensing Requirements for Child Care Programs, Pub. 14-05, effective 11-1-2025:
+  https://oklahoma.gov/content/dam/ok/en/okdhs/documents/okdhs-publication-library/14-05_LicensingRequirementsforChildCarePrograms_ccs_07312025.pdf
+- Child Care Centers 5 Star Level Overview (criteria effective 6-1-2022):
+  https://oklahoma.gov/content/dam/ok/en/okdhs/documents/okdhs-pdf-library/child-care-services/qris/ChildCareCenters5StarLevelOverview_ccs_11072022.pdf
+- Child Care Rules and Feedback (later accreditation requirement for 5-Star programs):
+  https://oklahoma.gov/okdhs/services/adult/ccsubsidy/rulesandfeedback.html
+- CECPD Professional Development Ladder (PDL):
+  https://cecpd.org/Provider-Programs/Oklahoma-Professional-Development-Registry-OPDR/Professional-Development-Ladder-PDL
+- APPLE Accreditation FAQ: https://appleaccreditation.org/faq/
+- FACCM / APPLE membership and annual reporting terms:
+  https://members.appleaccreditation.org/ap/Membership/Application/vrAZlmp2
+
+Operating principle from the answers: use the minimum information needed, default to restricted
+access, preserve the audit trail, and require a second verification step before any deadline,
+role or official rule becomes active. No dashboard status replaces the original license,
+credential, certificate or accrediting record.
 
 ## Implementation decisions made during the build
 
@@ -44,7 +91,10 @@ https://oklahoma.gov/okdhs.html, CECPD https://www.cecpd.org/, APPLE https://www
 | 2026-11-24 | New evidence defaults to access class `restricted` | Default deny: a missing class must not make a document widely readable. |
 | 2026-11-24 | No-hard-delete and insert-only audit are triggers, not only missing policies | They must hold for the service role too (rules 6 and 9). |
 | 2026-11-24 | `reminder_events.due_date` column added | The unique index in section 5 names it. |
-| 2026-11-24 | Brand color is admiral blue (`#2c3863`) | Requested by the owner. Set once in `src/app/globals.css`. |
+| 2026-11-24 | Brand palette is navy, sage, warm beige, slate and cream (replaced the admiral-blue-only choice) | Director's answers. Set once in `src/app/globals.css`. |
+| 2026-11-24 | The supplied license and candidacy letter are not committed to the repository | They are real SquareOne records. They belong in the private evidence bucket on the production project, uploaded by the director. |
+| 2026-11-24 | The 90-day reminder now goes to every dated item, not only major renewals | The approved schedule lists 90 days as standard; the 120-day notice is the one reserved for critical items. |
+| 2026-11-24 | A document view is refused if it cannot be logged | Decision 8: views are logged. |
 | 2026-11-24 | Phases 1 to 4 were built before the Phase 0 exit check on Vercel | The owner asked to build the whole app through to testing with real logins. The exit checks were run against a local Supabase stack instead; the hosted checks remain on the go-live gate. |
 | 2026-11-24 | A renewal is: approve new evidence on an already-verified recurring item. The old cycle closes with its evidence, a new cycle opens with the next due date, and the approved submission belongs to the new cycle | Keeps prior evidence with its cycle and keeps the item verified through the handover (BUILD.md acceptance test). |
 | 2026-11-24 | The next due date is computed by `src/lib/domain/deadlines.ts` from the version's recurrence rule and passed to the database function `review_evidence_link` | Rule 11: deadline math is a pure, unit-tested function. With no rule, no date is generated. |

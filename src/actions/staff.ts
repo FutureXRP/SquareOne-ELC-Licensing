@@ -13,6 +13,8 @@ const staffFields = z.object({
   classroom_id: optionalUuid,
   hire_date: optionalDate,
   supervisor_id: optionalUuid,
+  pdl_level: z.coerce.number().int().min(1).max(11).optional(),
+  pdl_renewal_date: optionalDate,
 });
 
 export async function createStaff(_p: ActionState, fd: FormData): Promise<ActionState> {
@@ -25,6 +27,8 @@ export async function createStaff(_p: ActionState, fd: FormData): Promise<Action
       classroom_id: data.classroom_id ?? null,
       hire_date: data.hire_date ?? null,
       supervisor_id: data.supervisor_id ?? null,
+      pdl_level: data.pdl_level ?? null,
+      pdl_renewal_date: data.pdl_renewal_date ?? null,
     });
     return e ? dbFail(e) : done("Staff member added. Their file items were opened.");
   });
@@ -49,6 +53,8 @@ export async function updateStaff(_p: ActionState, fd: FormData): Promise<Action
         classroom_id: rest.classroom_id ?? null,
         hire_date: rest.hire_date ?? null,
         supervisor_id: rest.supervisor_id ?? null,
+        pdl_level: rest.pdl_level ?? null,
+        pdl_renewal_date: rest.pdl_renewal_date ?? null,
         separation_date: rest.employment_status === "separated" ? (rest.separation_date ?? null) : null,
       })
       .eq("id", id);

@@ -36,7 +36,11 @@ point-in-time recovery) once the project exists.
 
 ## Before real data (go-live gate)
 
-- [ ] Every open decision in `docs/DECISIONS.md` is answered.
+- [ ] The five information-needed items in `docs/DECISIONS.md` are complete (license verified at 95,
+      APPLE certificate and dates, backup reviewer and limits, sender domain, retention schedule).
+- [ ] Authority names replaced with the official names and links (Settings, Setup).
+- [ ] SPF, DKIM and DMARC pass for the sender domain before `REMINDERS_ENABLED=true`.
+- [ ] The director signs the production go-live record.
 - [ ] `docs/BLUEPRINT.md` is committed and checked against the build.
 - [ ] `pnpm db:test` and `pnpm test:e2e` re-run against the hosted development project.
 - [ ] One reminder email sent end to end through Resend from a verified sender domain, with

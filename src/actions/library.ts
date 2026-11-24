@@ -22,7 +22,7 @@ export async function createRequirement(_p: ActionState, fd: FormData): Promise<
   });
   const { data, error } = parseForm(schema, fd);
   if (error) return error;
-  return runAction(DIRECTOR, async ({ db }) => {
+  return runAction(OFFICE, async ({ db }) => {
     const { data: req, error: e } = await db
       .from("requirements")
       .insert({ code: data.code, authority_id: data.authority_id, title: data.title, category: data.category ?? null })
@@ -84,7 +84,8 @@ async function saveVersion(fd: FormData, activate: boolean): Promise<ActionState
     if (!data.frequency || !data.criticality) return fail("Activation needs a frequency and a criticality.");
     if (data.last_source_review > chicagoToday()) return fail("The source review date cannot be in the future.");
   }
-  return runAction(DIRECTOR, async ({ db, session }) => {
+  // Drafts: director or designated admin support (the database decides). Activation: director only.
+  return runAction(activate ? DIRECTOR : OFFICE, async ({ db, session }) => {
     const roles = (data.applies_to_roles ?? "").split(",").map((r) => r.trim()).filter(Boolean);
     const { data: updated, error: e } = await db
       .from("requirement_versions")
@@ -123,7 +124,7 @@ export async function activateVersion(_p: ActionState, fd: FormData): Promise<Ac
 export async function startNewVersion(_p: ActionState, fd: FormData): Promise<ActionState> {
   const { data, error } = parseForm(z.object({ requirement_id: uuid }), fd);
   if (error) return error;
-  return runAction(DIRECTOR, async ({ db }) => {
+  return runAction(OFFICE, async ({ db }) => {
     const { data: versions } = await db
       .from("requirement_versions")
       .select("*")

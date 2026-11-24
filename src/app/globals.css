@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  /* Brand: admiral blue. */
-  --background: #f5f7fa;
-  --foreground: #141c2e;
+  /* SquareOne palette: navy #26384A, sage #879B82, warm beige #E9DDC8, slate #66717A, cream #F7F3EA.
+     Body text uses slightly darker shades of navy and slate so small type keeps its contrast. */
+  --accent: #879b82;
+  --background: #f7f3ea;
+  --foreground: #1c2733;
   --card: #ffffff;
-  --muted: #e9edf4;
-  --muted-foreground: #56617a;
-  --border: #d5dbe6;
-  --primary: #2c3863;
+  --muted: #efe6d6;
+  --muted-foreground: #5b6670;
+  --border: #ddd3c0;
+  --primary: #26384a;
   --primary-foreground: #ffffff;
-  --ring: #2c3863;
+  --ring: #26384a;
   /* Status tones. Green is reserved for verified + current (rule 4). */
   --status-green: #17663a;
   --status-green-bg: #e3f3e8;
@@ -18,8 +20,8 @@
   --status-amber-bg: #fdf0d5;
   --status-red: #a32020;
   --status-red-bg: #fbe4e2;
-  --status-neutral: #48526a;
-  --status-neutral-bg: #e6eaf1;
+  --status-neutral: #4f5a63;
+  --status-neutral-bg: #e9ddc8;
 }
 
 @theme inline {
@@ -32,6 +34,7 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-ring: var(--ring);
+  --color-accent: var(--accent);
   --color-status-green: var(--status-green);
   --color-status-green-bg: var(--status-green-bg);
   --color-status-amber: var(--status-amber);

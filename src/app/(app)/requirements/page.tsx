@@ -23,7 +23,9 @@ export default async function RequirementsPage() {
     fetchAll((a, b) => db.from("authorities").select("id, code, name").order("code").range(a, b)),
   ]);
   const auth = new Map(authorities.map((a) => [a.id, a.code]));
+  const { data: me } = await db.from("profiles").select("can_draft_library").eq("id", session.userId).maybeSingle();
   const director = can(session.role, "library.edit");
+  const drafter = director || (session.role === "admin_support" && me?.can_draft_library === true);
   const activeCount = reqs.filter((r) => versions.some((v) => v.requirement_id === r.id && v.status === "active")).length;
 
   return (
@@ -57,7 +59,7 @@ export default async function RequirementsPage() {
           <ActionForm action={generateInstances} submitLabel="Open missing items" variant="outline" />
         </Section>
       ) : null}
-      {director ? (
+      {drafter ? (
         <Section title="Add a requirement" description="It is added as a draft. Do not enter a rule from memory: record it from the official source when you activate it.">
           <ActionForm action={createRequirement} submitLabel="Add draft requirement">
             <FormGrid>

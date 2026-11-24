@@ -10,7 +10,16 @@ export async function sendEmail(to: string, email: Email): Promise<SendResult> {
   const from = process.env.EMAIL_FROM;
   if (!key || !from) return { ok: false, error: "Email is not configured (RESEND_API_KEY and EMAIL_FROM)." };
   try {
-    const { data, error } = await new Resend(key).emails.send({ from, to, subject: email.subject, html: email.html, text: email.text });
+    const replyTo = process.env.EMAIL_REPLY_TO || undefined;
+    const { data, error } = await new Resend(key).emails.send({
+      // Display name approved by the director; the address must be on a verified SquareOne domain.
+      from: from.includes("<") ? from : `SquareOne ELC Compliance <${from}>`,
+      to,
+      replyTo,
+      subject: email.subject,
+      html: email.html,
+      text: email.text,
+    });
     if (error) return { ok: false, error: `${error.name}: ${error.message}`.slice(0, 300) };
     return { ok: true, id: data?.id ?? null };
   } catch (e) {

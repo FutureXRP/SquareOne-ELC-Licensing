@@ -133,6 +133,10 @@ test("a staff member cannot read another staff member's documents (table and sto
   const mine = await page.request.get(`/api/evidence/signed-url?id=${ev!.id}`, { maxRedirects: 0 });
   expect(mine.status()).toBe(307);
   expect(mine.headers().location).toContain("/storage/v1/object/sign/evidence/");
+  // The successful view is logged with who and what; the refused one left no trace.
+  const { data: views } = await admin.from("evidence_access_log").select("evidence_id, profile_id");
+  const { data: cedar } = await admin.from("profiles").select("id").eq("email", USERS.educator1.email).single();
+  expect(views).toEqual([{ evidence_id: ev!.id, profile_id: cedar!.id }]);
 });
 
 async function signOutAndIn(page: Page, who: keyof typeof USERS) {

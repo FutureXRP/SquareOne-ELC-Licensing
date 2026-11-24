@@ -3,12 +3,12 @@ import { criticalAlertEmail, evidenceRejectedEmail, reminderEmail } from "../../
 import { appUrl, cronAuthorized, getMarker, remindersEnabled, setMarker } from "@/lib/cron";
 import { fetchAll } from "@/lib/data";
 import { chicagoToday } from "@/lib/dates";
-import { MILESTONE_LABEL, planReminders, reminderKey, type Milestone, type ReminderItem } from "@/lib/domain/reminders";
+import { ALL_MILESTONES, MILESTONE_LABEL, planReminders, reminderKey, type ReminderItem } from "@/lib/domain/reminders";
 import { sendEmail } from "@/lib/email/send";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const MAX_ATTEMPTS = 5;
-const ALL: Milestone[] = ["d90", "d60", "d30", "d14", "d7", "due", "overdue"];
+const ALL = ALL_MILESTONES;
 
 /**
  * Daily reminder run (BUILD.md section 7). Vercel Cron fires in UTC; this works out the
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     fetchAll((a, b) => db.from("v_deadline_items").select("*").order("id").range(a, b)),
     fetchAll((a, b) => db.from("profiles").select("id, email, role, is_active, staff_id").is("archived_at", null).range(a, b)),
     db.from("settings").select("value").eq("key", "reminder_milestones").maybeSingle(),
-    fetchAll((a, b) => db.from("reminder_events").select("requirement_instance_id, credential_id, milestone, recipient_id, due_date").eq("channel", "email").order("id").range(a, b)),
+    fetchAll((a, b) => db.from("reminder_events").select("requirement_instance_id, credential_id, milestone, recipient_id, due_date, notice_date").eq("channel", "email").order("id").range(a, b)),
   ]);
   const active = new Map(profiles.filter((p) => p.is_active).map((p) => [p.id, p]));
   const directorIds = profiles.filter((p) => p.is_active && p.role === "director").map((p) => p.id);
@@ -41,11 +41,11 @@ export async function GET(request: NextRequest) {
     // A credential with no renewal owner belongs to the staff member it is about.
     ownerId: i.owner_id ?? (i.kind === "credential" ? (byStaff.get(i.subject_id!) ?? null) : null),
     backupId: i.backup_id,
-    major: i.kind === "credential" || (i.criticality !== null && i.criticality !== "internal"),
+    critical: i.critical === true,
   }));
   const alreadySent = new Set(
     existing.filter((e) => e.due_date).map((e) =>
-      reminderKey({ kind: e.credential_id ? "credential" : "requirement", itemId: (e.credential_id ?? e.requirement_instance_id)!, milestone: e.milestone, recipientId: e.recipient_id, dueDate: e.due_date! }),
+      reminderKey({ kind: e.credential_id ? "credential" : "requirement", itemId: (e.credential_id ?? e.requirement_instance_id)!, milestone: e.milestone, recipientId: e.recipient_id, dueDate: e.due_date!, noticeDate: e.notice_date }),
     ),
   );
   const planned = planReminders(reminderItems, today, { enabled, directorIds, alreadySent }).filter((p) => active.has(p.recipientId));
@@ -66,8 +66,9 @@ export async function GET(request: NextRequest) {
         milestone: p.milestone,
         recipient_id: p.recipientId,
         due_date: p.dueDate,
+        notice_date: p.noticeDate,
       })),
-      { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date", ignoreDuplicates: true },
+      { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date,notice_date", ignoreDuplicates: true },
     );
   }
 
@@ -76,7 +77,7 @@ export async function GET(request: NextRequest) {
   if ((ineligible ?? []).length > 0 && directorIds.length > 0) {
     await db.from("reminder_events").upsert(
       (ineligible ?? []).flatMap((c) => directorIds.map((d) => ({ credential_id: c.id, milestone: "critical" as const, recipient_id: d, due_date: today }))),
-      { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date", ignoreDuplicates: true },
+      { onConflict: "requirement_instance_id,credential_id,milestone,recipient_id,due_date,notice_date", ignoreDuplicates: true },
     );
   }
 
